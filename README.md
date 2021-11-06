@@ -1,8 +1,7 @@
-# @dulliag/discord-helper
-
-![npm](https://img.shields.io/npm/v/@dulliag/logger-js?style=for-the-badge)
-![npm](https://img.shields.io/npm/dt/@dulliag/discord-js?label=Downloads&style=for-the-badge)
-![NPM](https://img.shields.io/npm/l/@dulliag/discord-js?style=for-the-badge)
+# @dulliag/logger.js
+![npm](https://img.shields.io/npm/v/@dulliag/logger.js?style=for-the-badge)
+![npm](https://img.shields.io/npm/dt/@dulliag/logger.js?label=Downloads&style=for-the-badge)
+![NPM](https://img.shields.io/npm/l/@dulliag/logger.js?style=for-the-badge)
 
 ## Topics
 
