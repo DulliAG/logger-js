@@ -27,10 +27,24 @@ class DatabaseCredentials {
   }
 
   /**
+   * @param {string} host
+   */
+  set host(host) {
+    this.#host = host;
+  }
+
+  /**
    * @returns {string}
    */
   get host() {
     return this.#host;
+  }
+
+  /**
+   * @param {string} user
+   */
+  set user(user) {
+    this.#user = user;
   }
 
   /**
@@ -41,10 +55,24 @@ class DatabaseCredentials {
   }
 
   /**
+   * @param {string} password
+   */
+  set password(password) {
+    this.#password = password;
+  }
+
+  /**
    * @returns {string}
    */
   get password() {
     return this.#password;
+  }
+
+  /**
+   * @param {string} database
+   */
+  set database(database) {
+    this.#database = database;
   }
 
   /**
@@ -56,7 +84,7 @@ class DatabaseCredentials {
 }
 
 class Logger {
-  #application = 'NONE';
+  #application;
   #pool;
 
   /**
@@ -64,10 +92,24 @@ class Logger {
    * @param {DatabaseCredentials} credentials
    * @param {string} application
    */
-  constructor(credentials, application) {
+  constructor(credentials, application = 'NONE') {
     const pool = mariadb.createPool(credentials);
     this.#pool = pool.getConnection();
     this.#application = application;
+  }
+
+  /**
+   * @param {string} application
+   */
+  set application(application) {
+    this.#application = application;
+  }
+
+  /**
+   * @returns {string}
+   */
+  get application() {
+    return this.#application;
   }
 
   /**
