@@ -93,8 +93,7 @@ class Logger {
    * @param {string} application
    */
   constructor(credentials, application = 'NONE') {
-    const pool = mariadb.createPool(credentials);
-    this.#pool = pool.getConnection();
+    this.#pool = mariadb.createPool(credentials);
     this.#application = application;
   }
 
@@ -120,16 +119,23 @@ class Logger {
    */
   log(code, message) {
     return this.#pool
+      .getConnection()
       .then((conn) => {
-        return conn.query(
-          'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-          [this.#application, TYPES.LOG, code, message]
-        );
+        return conn
+          .query(
+            'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
+            [this.#application, TYPES.LOG, code, message]
+          )
+          .then((res) => {
+            conn.release(); // release to pool
+            return res; // res: { affectedRows: 1, insertId: 1, warningStatus: 0 }
+          })
+          .catch((err) => {
+            conn.release(); // release to pool
+            throw err;
+          });
       })
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => this.error('LOG-EXECUTION', err));
+      .catch((err) => console.log(err));
   }
 
   /**
@@ -140,16 +146,23 @@ class Logger {
    */
   warn() {
     return this.#pool
+      .getConnection()
       .then((conn) => {
-        return conn.query(
-          'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-          [this.#application, TYPES.WARN, code, message]
-        );
+        return conn
+          .query(
+            'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
+            [this.#application, TYPES.WARN, code, message]
+          )
+          .then((res) => {
+            conn.release(); // release to pool
+            return res; // res: { affectedRows: 1, insertId: 1, warningStatus: 0 }
+          })
+          .catch((err) => {
+            conn.release(); // release to pool
+            throw err;
+          });
       })
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => this.error('LOG-EXECUTION', err));
+      .catch((err) => console.log(err));
   }
 
   /**
@@ -160,16 +173,23 @@ class Logger {
    */
   error(code, message) {
     return this.#pool
+      .getConnection()
       .then((conn) => {
-        return conn.query(
-          'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-          [this.#application, TYPES.ERROR, code, message]
-        );
+        return conn
+          .query(
+            'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
+            [this.#application, TYPES.ERROR, code, message]
+          )
+          .then((res) => {
+            conn.release(); // release to pool
+            return res; // res: { affectedRows: 1, insertId: 1, warningStatus: 0 }
+          })
+          .catch((err) => {
+            conn.release(); // release to pool
+            throw err;
+          });
       })
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => console.error(err));
+      .catch((err) => console.log(err));
   }
 }
 
