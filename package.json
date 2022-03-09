@@ -30,7 +30,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "mariadb": ">=2.5.5"
+    "mariadb": ">=2.5.5",
+    "pg": "^8.7.3"
   },
   "peerDependencies": {
     "mariadb": ">=2.5.5"

@@ -1,12 +1,28 @@
 const mariadb = require('mariadb');
+const pg = require('pg');
 
-const TYPES = Object.freeze({
+/**
+ * Types of avaiable logs
+ */
+const LogVariant = Object.freeze({
   LOG: 'LOG',
-  WARN: 'WARN',
+  INFORMATION: 'INFO',
+  WARNING: 'WARN',
   ERROR: 'ERROR',
 });
 
-class DatabaseCredentials {
+/**
+ * Database Types
+ */
+const Database = Object.freeze({
+  MariaDB: 'MariaDB',
+  PG: 'PostgreSQL',
+});
+
+/**
+ * Database Credentials
+ */
+class Credentials {
   #host;
   #user;
   #password;
@@ -34,7 +50,7 @@ class DatabaseCredentials {
   }
 
   /**
-   * @returns {string}
+   * @returns {string} host
    */
   get host() {
     return this.#host;
@@ -48,7 +64,7 @@ class DatabaseCredentials {
   }
 
   /**
-   * @returns {string}
+   * @returns {string} user
    */
   get user() {
     return this.#user;
@@ -62,7 +78,7 @@ class DatabaseCredentials {
   }
 
   /**
-   * @returns {string}
+   * @returns {string} password
    */
   get password() {
     return this.#password;
@@ -76,121 +92,107 @@ class DatabaseCredentials {
   }
 
   /**
-   * @returns {string}
+   * @returns {string} database
    */
   get database() {
     return this.#database;
   }
 }
 
-class Logger {
+/**
+ * LoggerJS-Client to create logs
+ */
+class Client {
+  #dbType;
   #application;
+  #client;
   #pool;
 
   /**
    *
-   * @param {DatabaseCredentials} credentials
-   * @param {string} application
+   * @param {Database} dbType
+   * @param {Credentials} credentials
+   * @param {application} application
    */
-  constructor(credentials, application = 'NONE') {
-    this.#pool = mariadb.createPool(credentials);
+  constructor(dbType, credentials, application = 'NONE') {
+    this.#dbType = dbType;
     this.#application = application;
-  }
 
-  /**
-   * @param {string} application
-   */
-  set application(application) {
-    this.#application = application;
-  }
+    switch (dbType) {
+      case 'MariaDB':
+        this.#pool = mariadb.createPool(credentials);
+        break;
 
-  /**
-   * @returns {string}
-   */
-  get application() {
-    return this.#application;
+      case 'PostgreSQL':
+        this.#client = new pg.Client(credentials);
+        break;
+    }
   }
 
   /**
    *
+   * @param {LogVariant} variant
    * @param {string} code
    * @param {string} message
-   * @returns {Promise<object>}
    */
-  log(code, message) {
-    return this.#pool
-      .getConnection()
-      .then((conn) => {
-        return conn
-          .query(
-            'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-            [this.#application, TYPES.LOG, code, message]
-          )
-          .then((res) => {
-            conn.release(); // release to pool
-            return res; // res: { affectedRows: 1, insertId: 1, warningStatus: 0 }
-          })
-          .catch((err) => {
-            conn.release(); // release to pool
-            throw err;
-          });
-      })
-      .catch((err) => console.log(err));
-  }
+  log(variant, code, message) {
+    console.log(
+      `[${variant}:${new Date().toISOString()}] (${code}) ${message}`
+    );
 
-  /**
-   *
-   * @param {string} code
-   * @param {string} message
-   * @returns {Promise<object>}
-   */
-  warn() {
-    return this.#pool
-      .getConnection()
-      .then((conn) => {
-        return conn
-          .query(
-            'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-            [this.#application, TYPES.WARN, code, message]
-          )
-          .then((res) => {
-            conn.release(); // release to pool
-            return res; // res: { affectedRows: 1, insertId: 1, warningStatus: 0 }
-          })
-          .catch((err) => {
-            conn.release(); // release to pool
-            throw err;
-          });
-      })
-      .catch((err) => console.log(err));
-  }
+    let result;
+    switch (this.#dbType) {
+      case 'MariaDB':
+        result = new Promise((res, rej) => {
+          this.#pool
+            .getConnection()
+            .then((conn) => {
+              return conn
+                .query(
+                  'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
+                  [this.#application, variant, code, message]
+                )
+                .then((result) => {
+                  conn.release();
+                  res(result);
+                })
+                .catch((err) => {
+                  conn.release();
+                  throw err;
+                });
+            })
+            .catch((err) => rej(err));
+        });
+        break;
 
-  /**
-   *
-   * @param {string} code
-   * @param {string} message
-   * @returns {Promise<object>}
-   */
-  error(code, message) {
-    return this.#pool
-      .getConnection()
-      .then((conn) => {
-        return conn
-          .query(
-            'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-            [this.#application, TYPES.ERROR, code, message]
-          )
-          .then((res) => {
-            conn.release(); // release to pool
-            return res; // res: { affectedRows: 1, insertId: 1, warningStatus: 0 }
-          })
-          .catch((err) => {
-            conn.release(); // release to pool
-            throw err;
+      case 'PostgreSQL':
+        result = new Promise((res, rej) => {
+          this.#client.connect().then(() => {
+            this.#client
+              .query(
+                'INSERT INTO logs(application, type, code, message) VALUES ($1, $2, $3, $4)',
+                [this.#application, variant, code, message]
+              )
+              .then((result) => {
+                this.#client.end();
+                res(result);
+              })
+              .catch((err) => {
+                this.#client.end();
+                rej(err);
+              });
           });
-      })
-      .catch((err) => console.log(err));
+        });
+        break;
+    }
+
+    return result;
   }
 }
 
-module.exports = { TYPES, DatabaseCredentials, Logger };
+module.exports = {
+  LogVariant: LogVariant,
+  Database: Database,
+  Credentials: Credentials,
+  Client: Client,
+};
