@@ -105,7 +105,8 @@ class Credentials {
 class Client {
   #dbType;
   #application;
-  #client;
+  #credentials;
+  // #client;
   #pool;
 
   /**
@@ -124,7 +125,8 @@ class Client {
         break;
 
       case 'PostgreSQL':
-        this.#client = new pg.Client(credentials);
+        // client = new pg.Client(credentials);
+        this.#credentials = credentials;
         break;
     }
   }
@@ -167,18 +169,19 @@ class Client {
 
       case 'PostgreSQL':
         result = new Promise((res, rej) => {
-          this.#client.connect().then(() => {
-            this.#client
+          const client = new pg.Client(this.#credentials);
+          client.connect().then(() => {
+            client
               .query(
                 'INSERT INTO logs(application, type, code, message) VALUES ($1, $2, $3, $4)',
                 [this.#application, variant, code, message]
               )
               .then((result) => {
-                this.#client.end();
+                client.end();
                 res(result);
               })
               .catch((err) => {
-                this.#client.end();
+                client.end();
                 rej(err);
               });
           });
