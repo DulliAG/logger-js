@@ -7,10 +7,9 @@
     "logs",
     "database"
   ],
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node build",
+    "build": "npx tsc",
     "start": "node index.js"
   },
   "author": "tklein1801",
@@ -37,7 +36,8 @@
     "mariadb": ">=2.5.5"
   },
   "devDependencies": {
-    "mariadb": ">=2.5.5"
+    "mariadb": ">=2.5.5",
+    "typescript": "^4.6.3"
   },
   "prettier": {
     "printWidth": 80,
