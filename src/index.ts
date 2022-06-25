@@ -48,7 +48,7 @@ export class Client {
       `[${type}:${new Date().toISOString()}] (${category}) ${message}`
     );
 
-    let result: Promise<unknown>;
+    let result: Promise<any>;
 
     switch (this.database) {
       case Database.MariaDB:
