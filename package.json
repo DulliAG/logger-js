@@ -9,10 +9,7 @@
     "test": "jest --passWithNoTests",
     "prepublishOnly": "tsc",
     "build": "npx tsc",
-    "start": "node index.js",
-    "patch": "npx standard-version --release-as patch",
-    "minor": "npx standard-version --release-as minor",
-    "major": "npx standard-version --release-as major"
+    "start": "node index.js"
   },
   "author": "tklein1801",
   "license": "ISC",

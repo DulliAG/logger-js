@@ -1,17 +1,9 @@
 import mariadb from 'mariadb';
 import pg from 'pg';
 
-export enum LogVariant {
-  LOG = 'LOG',
-  INFORMATION = 'INFO',
-  WARNING = 'WARN',
-  ERROR = 'ERROR',
-}
+export type LogType = 'LOG' | 'INFORMATION' | 'WARNING' | 'ERROR';
 
-export enum Database {
-  MariaDB = 'MariaDB',
-  PG = 'PostgreSQL',
-}
+export type Database = 'MariaDB' | 'PostgreSQL';
 
 export interface Credentials {
   host: string;
@@ -20,46 +12,58 @@ export interface Credentials {
   database: string;
 }
 
+export interface ClientOptions {
+  application: string;
+  saveLogs?: boolean;
+  consoleOutput?: boolean;
+}
+
 export class Client {
   private database: Database;
   private credentials: Credentials;
-  private application: string;
+  private options: ClientOptions = {
+    saveLogs: true,
+    consoleOutput: true,
+  } as ClientOptions;
 
   private pool: mariadb.Pool;
 
   constructor(
     database: Database,
     credentials: Credentials,
-    application: string = 'None'
+    options: ClientOptions
   ) {
     this.database = database;
     this.credentials = credentials;
-    this.application = application;
+    for (const [key, value] of Object.entries(options)) {
+      this.options[key] = value;
+    }
 
     switch (database) {
-      case Database.MariaDB:
+      case 'MariaDB':
         this.pool = mariadb.createPool(credentials);
         break;
     }
   }
 
-  log(type: LogVariant, category: string, message: string) {
-    console.log(
-      `[${type}:${new Date().toISOString()}] (${category}) ${message}`
-    );
+  log(type: LogType, category: string, message: string) {
+    if (this.options.consoleOutput) {
+      console.log(
+        `[${type}:${new Date().toISOString()}] (${category}) ${message}`
+      );
+    }
 
-    let result: Promise<any>;
-
+    if (!this.options.saveLogs) return null;
     switch (this.database) {
-      case Database.MariaDB:
-        result = new Promise((res, rej) => {
+      case 'MariaDB':
+        return new Promise((res, rej) => {
           this.pool
             .getConnection()
             .then((conn) => {
               return conn
                 .query(
                   'INSERT INTO `logs`(`application`, `type`, `code`, `message`) VALUES (?, ?, ?, ?)',
-                  [this.application, type, category, message]
+                  [this.options.application, type, category, message]
                 )
                 .then((result) => {
                   conn.release();
@@ -74,14 +78,14 @@ export class Client {
         });
         break;
 
-      case Database.PG:
-        result = new Promise((res, rej) => {
+      case 'PostgreSQL':
+        return new Promise((res, rej) => {
           const client = new pg.Client(this.credentials);
           client.connect().then(() => {
             client
               .query(
                 'INSERT INTO logs(application, type, code, message) VALUES ($1, $2, $3, $4)',
-                [this.application, type, category, message]
+                [this.options.application, type, category, message]
               )
               .then((result) => {
                 client.end();
@@ -95,7 +99,5 @@ export class Client {
         });
         break;
     }
-
-    return result;
   }
 }

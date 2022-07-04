@@ -1,12 +1,6 @@
 # @dulliag/logger.js
 
-![npm](https://img.shields.io/npm/v/@dulliag/logger.js?style=for-the-badge)
-![npm](https://img.shields.io/npm/dt/@dulliag/logger.js?label=Downloads&style=for-the-badge)
-![NPM](https://img.shields.io/npm/l/@dulliag/logger.js?style=for-the-badge)
-
-> :warning: **Disclaimer** :warning:
-> This documentation is not up to date for @dulliag/logger.js(v1.0.0+)
-> An updated documentation will follow soon
+[![Node.js Package](https://github.com/DulliAG/logger.js/actions/workflows/publish_package.yml/badge.svg)](https://github.com/DulliAG/logger.js/actions/workflows/publish_package.yml)
 
 ## Topics
 
@@ -15,7 +9,14 @@
 
 ## Installation
 
-1. Install the package
+1. Create an `.npmrc` to download the package
+
+```
+@dulliag:registry=https://npm.pkg.github.com/
+//npm.pkg.github.com/:_authToken=${NPM_TOKEN}
+```
+
+2. Install the package
    ```shell
    npm install @dulliag/logger.js
    ```
@@ -23,93 +24,38 @@
 
 ## This package contains...
 
-- [TYPES](#types)
-- [DatabaseCredentials](#databasecredentials)
-- [Logger](#logger)
+- [Credentials](#credentials)
+- [Client](#client)
 
-### TYPES
+### Credentials
 
-_Possible log-types_
+```ts
+import { Credentials } from '@dulliag/logger.js';
 
-```js
-const { TYPES } = require('@dulliag/logger.js');
-// Could be (LOG|WARN|ERROR)
+const credentials: Credentials = {
+  host: 'HOST',
+  user: 'USER',
+  password: 'PASSWORD',
+  database: 'DATABASE',
+};
 ```
 
-### DatabaseCredentials
+### Client
 
-```js
-const { DatabaseCredentials } = require('@dulliag/logger.js');
+```ts
+import { Credentials, ClientOptions, Client } from '@dulliag/logger.js';
 
-const credentials = new DatabaseCredentials(
-  'HOST',
-  'USER',
-  'PASSWORD',
-  'DATABASE'
-);
-```
+const credentials: Credentials = {
+  host: 'HOST',
+  user: 'USER',
+  password: 'PASSWORD',
+  database: 'DATABASE',
+};
 
-### Logger
+const options = {
+  application: "APPLICATION
+} as ClientOptions;
 
-#### log
-
-```js
-const { DatabaseCredentials, Logger } = require('@dulliag/logger.js');
-
-const credentials = new DatabaseCredentials(
-  'HOST',
-  'USER',
-  'PASSWORD',
-  'DATABASE'
-);
-
-const LOGGER = new Logger(credentials, 'DulliBot');
-LOGGER.log('Bot started', 'DulliBot started successfully!')
-  .then((result) => {
-    console.log(result);
-    // { affectedRows: 1, insertId: 2, warningStatus: 0 }
-  })
-  .catch((err) => console.error(err));
-```
-
-#### warn
-
-```js
-const { DatabaseCredentials, Logger } = require('@dulliag/logger.js');
-
-const credentials = new DatabaseCredentials(
-  'HOST',
-  'USER',
-  'PASSWORD',
-  'DATABASE'
-);
-
-const LOGGER = new Logger(credentials, 'DulliBot');
-LOGGER.warn('Outdated version', 'DulliBot runs on an outdated version!')
-  .then((result) => {
-    console.log(result);
-    // { affectedRows: 1, insertId: 2, warningStatus: 0 }
-  })
-  .catch((err) => console.error(err));
-```
-
-#### error
-
-```js
-const { DatabaseCredentials, Logger } = require('@dulliag/logger.js');
-
-const credentials = new DatabaseCredentials(
-  'HOST',
-  'USER',
-  'PASSWORD',
-  'DATABASE'
-);
-
-const LOGGER = new Logger(credentials, 'DulliBot');
-LOGGER.error('Start failed', 'DulliBot didnt start successfully!')
-  .then((result) => {
-    console.log(result);
-    // { affectedRows: 1, insertId: 2, warningStatus: 0 }
-  })
-  .catch((err) => console.error(err));
+const client = new Client("PostgreSQL" /* type of Database */, credentials, options);
+client.log("LOG", "TAG", "MESSAGE");
 ```
